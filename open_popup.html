@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>api2.0_Marker</title>
+
+<!-- API key를 포함하여 브이월드 API URL을 지정하여 호출끝  -->
+<script type="text/javascript" src="http://map.vworld.kr/js/vworldMapInit.js.do?version=2.0&apiKey=E4A59B05-0CF4-3654-BD0C-A169F70CCB34"></script>
+</head>
+<body>
+	<div id="vmap"
+		style="width: 1024px; height: 620px; left: 0px; top: 0px"></div>
+	<button type="button" onclick="javascript:setMode(vw.ol3.BasemapType.GRAPHIC);">2D배경지도</button>
+	<button type="button" onclick="javascript:setMode(vw.ol3.BasemapType.GRAPHIC_GRAY);">2D회색사진</button>
+	<button type="button" onclick="javascript:setMode(vw.ol3.BasemapType.GRAPHIC_NIGHT);">2D야간사진</button>
+	<button type="button" onclick="javascript:setMode(vw.ol3.BasemapType.PHOTO);">2D항공사진</button>
+	<button type="button" onclick="javascript:setMode(vw.ol3.BasemapType.PHOTO_HYBRID);">2D영상사진</button>
+	
+	<button type="button" onclick="javascript:togglePopup('Marker-we');">우리집 On/Off</button>
+	<button type="button" onclick="javascript:togglePopup('Marker-friend');">친구집 On/Off</button>
+	<script>
+		
+		vw.ol3.MapOptions = {
+			basemapType : vw.ol3.BasemapType.GRAPHIC,
+			controlDensity : vw.ol3.DensityType.BASIC,
+			interactionDensity : vw.ol3.DensityType.FULL,
+			controlsAutoArrange : true,
+			homePosition : vw.ol3.CameraPosition,
+			initPosition : vw.ol3.CameraPosition
+		};
+
+		vmap = new vw.ol3.Map("vmap", vw.ol3.MapOptions);
+
+		var markerLayer = new vw.ol3.layer.Marker(vmap);
+		vmap.addLayer(markerLayer);
+		markerLayer.setZIndex(999);
+		
+		function clearMarker() {
+			vmap.removeLayer(markerLayer);
+			vmap.removeOverlay(popup1);
+		}
+		vw.ol3.markerOption = {
+			x : 126.24,
+			y : 37.4,
+			epsg : "EPSG:4326",
+			title : '우리집',
+			contents : '경기도 광주시 오포읍 양벌리 양촌안길',
+			iconSize : 20,
+			iconUrl : 'http://map.vworld.kr/images/maps/marker.png'
+		};
+		var mfeature1 = markerLayer.addMarker(vw.ol3.markerOption);
+		mfeature1.set("id", "Marker-"+"we");
+		vw.ol3.markerOption = {
+			x : 127.24,
+			y : 37.4,
+			epsg : "EPSG:4326",
+			title : '친구집',
+			contents : '경기도 안양시 동안구 관양동',
+			iconSize : 40,
+			iconUrl : 'http://map.vworld.kr/images/maps/marker.png'
+		};
+		var mfeature2 = markerLayer.addMarker(vw.ol3.markerOption);
+		
+		//마커 id 설정
+		//mfeature2.set("id", "Marker-" + "testtest1234"); //(권장) Marker-uniqueId
+		mfeature2.set("id", "Marker-"+"friend");
+		
+		//특정 마커 팝업 On/Off
+		function togglePopup(targetId){
+			
+			var markers = markerLayer.getSource().getFeatures();
+			if (markers.length < 1) return;
+			
+			//임의로 id 추출
+			
+			//건별 popup 닫기(Off)
+			for(var i=0; i<vmap.getOverlays().getArray().length; i++){
+				if(vmap.getOverlays().getArray()[i].get('markerId') == targetId){
+					vmap.getOverlays().getArray()[i].close();
+					return;
+				}
+			}
+			
+			//전체 팝업 닫기
+			//markerLayer.closeAllPop();
+			//해당 Popup 열기(On)
+			for(var i=0; i<markers.length; i++){
+				var feature = markers[i];
+				var featureId = feature.get("id");
+				if (targetId == featureId){	
+					var popup = new vw.ol3.popup.Popup();
+					popup.setOffset([ 0, -25 ]);
+					popup.title = "<b>" + feature.get('title')+"</b><hr>";
+					popup.content = feature.get('contents');
+					popup.set("markerId",featureId);
+					vmap.addOverlay(popup);
+					popup.show(popup.content, feature.getGeometry().flatCoordinates);
+					return;
+				}
+			}
+		}
+		
+		function setMode(basemapType) {
+			vmap.setBasemapType(basemapType);
+			
+		};
+		
+	</script>
+
+
+</body>
+</html>
