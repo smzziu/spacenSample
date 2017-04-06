@@ -98,18 +98,22 @@ $(function(){
 		        tilePixelRatio: 1,
 		        tileSize: [512, 512],
 		        source: new ol.source.TileWMS({
-		            url: "http://2d.vworld.kr:8895/2DCache/gis/map/WMS2",
+		            url: "http://api.vworld.kr/req/wms?",
 		            params: {
 		                LAYERS: this_val,
 		                STYLES: this_val,
 		                CRS: "EPSG:900913",
 		                apikey: "E4A59B05-0CF4-3654-BD0C-A169F70CCB34",
+		                DOMAIN:"http://loacalhost:8080",
 		                title: this_title,
-		                FORMAT: "image/png"
+		                FORMAT: "image/png",
+		                domain: "http://localhost",
+		                WIDTH:512,
+		                HEIGHT:512
 		            },
 		            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}) //_tilegrid 
-			        })
-			    });
+			    })
+		    	});
 			layer_tile.setZIndex(5);
 			map.addLayer(layer_tile);
 		}//if(isNull)
