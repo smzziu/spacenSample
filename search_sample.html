@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://openlayers.org/en/v4.0.1/build/ol.js"></script>
+
+
+<link rel="stylesheet" href="https://openlayers.org/en/v4.0.1/css/ol.css" type="text/css">
+<meta charset="UTF-8">
+<style type="text/css">
+.form_data{
+  font-size : 0.7em;
+}
+</style>
+<title>wms test 4.0.1</title>
+</head>
+
+<body>
+<div id="map" style="float: left; width: 800px;"></div>
+<div style="border: 1px solid black; float: left; width: 224px; " >
+	
+
+	<div>
+		<form action="" id="wms_check_box" class="form_data">
+			<ul>
+				<li>지적도
+					<ul>
+						<li><span>지적도1</span> <input type="checkbox" value="LP_PA_CBND_BUBUN"></li>
+						<li><span>지적도2</span> <input type="checkbox" value="LP_PA_CBND_BONBUN"></li>
+					</ul>
+				</li>
+				<li>도로명주소도
+					<ul>
+						<li><span>도로명주소도로</span> <input type="checkbox" value="LT_L_SPRD"></li>
+						<li><span>도로명주소건물</span> <input type="checkbox" value="LT_C_SPBD"></li>
+					</ul>
+				</li>
+				<li>행정구역도
+					<ul>
+						<li><span>광역시도</span> <input type="checkbox" value="LT_C_ADSIDO"></li>
+						<li><span>시군구</span> <input type="checkbox" value="LT_C_ADSIGG"></li>
+						<li><span>읍면동</span> <input type="checkbox" value="LT_C_ADEMD"></li>
+						<li><span>리</span> <input type="checkbox" value="LT_C_ADRI"></li>
+					</ul>
+				</li>
+			</ul>
+		</form>
+	</div>
+	<div>
+		<form id="searchForm" action="#" class="form_data">
+			<input type="hidden" name="output" value="json">
+			<input type="hidden" name="pageIndex" value="1">
+			<input type="hidden" name="pageUnit" value="10">
+			<input type="hidden" name="apiKey" value="E4A59B05-0CF4-3654-BD0C-A169F70CCB34">
+			<select name="category">
+				<option value="poi">poi</option>
+				<option value="Juso">address</option>
+			</select>
+			<input type="text" id="searchValue" name="q" value="판교로" style="width: 100px;" /> <a href="javascript:search();" >검색</a> 
+		
+		<ul id="result_ajax">
+			<li></li>
+		</ul>
+		<p id="result_count"></p>
+		<p id="result_pos"></p>
+		</form>
+	</div>
+	
+</div>
+<script type="text/javascript">
+	
+var view = new ol.View({
+	projection : 'EPSG:900913',
+	center: ol.proj.transform([128.879115,35.226713], 'EPSG:4326', 'EPSG:900913'),
+	zoom: 17,
+	minZoom : 0,
+	maxZoom : 21
+});
+
+var osm = new ol.layer.Tile({//OpenStreetMap
+	visible: true,
+	source: new ol.source.OSM({
+		attributions: [ ol.source.OSM.ATTRIBUTION ]
+	}),
+	name: "osm"
+});
+ 	
+var map = new ol.Map({
+	layers: [osm],
+	target: 'map', // The DOM element that will contains the map
+	renderer : 'canvas', // Force the renderer to be used
+	view : view,
+	controls: ol.control.defaults({
+		attributionOptions:  ({ collapsed: false }) 	    
+	})
+	
+});
+
+$(function(){
+	$(document).on('click','#wms_check_box input[type=checkbox]',function(){
+		var this_val = $(this).val();
+		var this_checked = $(this).is(":checked");
+		var this_title = $(this).prev().text();
+		var isNull = true; //널여부 체크
+		
+		map.getLayers().forEach(function(layer) {
+			if(layer.get("name")=="wms_theme_" + this_title){
+				if(this_checked){
+					layer.setVisible(true);
+				}else{
+					layer.setVisible(false);
+				}
+				isNull = false;
+			}
+		})//map.getLayers().forEach
+		if(isNull){
+			var layer_tile = new ol.layer.Tile({
+		        title: this_title,
+		        name: "wms_theme_" + this_title,
+		        extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],//
+		        maxZoom: 19,
+		        minZoom: 6,
+		        projection: "EPSG:900913",
+		        tilePixelRatio: 1,
+		        tileSize: [512, 512],
+		        source: new ol.source.TileWMS({
+		            url: "http://api.vworld.kr/req/wms?",
+		            params: {
+		                LAYERS: this_val,
+		                STYLES: this_val,
+		                CRS: "EPSG:900913",
+		                apikey: "E4A59B05-0CF4-3654-BD0C-A169F70CCB34",
+		                DOMAIN:"http://loacalhost:8080",
+		                title: this_title,
+		                FORMAT: "image/png",
+		                domain: "http://localhost",
+		                WIDTH:512,
+		                HEIGHT:512
+		            },
+		            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}) //_tilegrid 
+			        })
+		    });
+			layer_tile.setZIndex(5);
+			map.addLayer(layer_tile);
+		}//if(isNull)
+	});//'click'
+})
+
+function search() {
+	$.ajax({
+		type: "get",
+		url: "http://map.vworld.kr/search.do",
+		data : $('#searchForm').serialize(),
+		dataType: 'jsonp',
+		success: function(data) {
+			var category = $('[name=category]').val();
+			var result_html ="";
+			if(category == "poi"){
+				console.log(data);
+				for(var o in data.LIST){ 
+					result_html += "<li><p onclick='move("+data.LIST[o].xpos+","+data.LIST[o].ypos+")'> juso: "+ data.LIST[o].juso +" nameFull : "+data.LIST[o].nameFull+"</p></li>";
+				}
+				
+			}else if(category == 'Juso'){
+				for(var o in data.LIST){ 
+					result_html += "<li><p onclick='move("+data.LIST[o].xpos+","+data.LIST[o].ypos+")'> JUSO: "+ data.LIST[o].JUSO +" ZIP_CL : "+data.LIST[o].ZIP_CL+"</p></li>";
+				}
+			}
+			$('#result_ajax').html(result_html);
+			$('#result_count').text(data.paginationInfo.totalRecordCount+"건이 검색되었습니다.");
+		},
+		error: function(xhr, stat, err) {}
+	});
+}
+
+function move(xpos,ypos){
+	console.log(xpos+"   "+ ypos);
+	$("#result_pos").text("x="+xpos+" y="+ypos);
+	
+	var view = new ol.View({
+		projection : 'EPSG:900913',
+		center: ol.proj.transform([xpos,ypos], 'EPSG:4326', 'EPSG:900913'),
+		zoom: 17,
+		minZoom : 0,
+		maxZoom : 21
+	});
+	map.setView(view);
+}
+</script>
+</body>
+</html>
