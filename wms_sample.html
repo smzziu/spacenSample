@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://openlayers.org/en/v4.0.1/build/ol.js"></script>
+
+
+<link rel="stylesheet" href="https://openlayers.org/en/v4.0.1/css/ol.css" type="text/css">
+<link rel="stylesheet" href="https://necolas.github.io/normalize.css/6.0.0/normalize.css" type="text/css">
+<meta charset="UTF-8">
+<title>wms test 4.0.1</title>
+</head>
+
+<body>
+<div id="map" style="float: left; width: 800px;"></div>
+<div style="border: 1px solid black; float: left; width: 224px; " >
+	
+	<form action="" id="wms_check_box">
+		<ul>
+		
+			<li>지적도
+				<ul>
+					<li><span>지적도1</span> <input type="checkbox" value="LP_PA_CBND_BUBUN"></li>
+					<li><span>지적도2</span> <input type="checkbox" value="LP_PA_CBND_BONBUN"></li>
+				</ul>
+			</li>
+			<li>도로명주소도
+				<ul>
+					<li><span>도로명주소도로</span> <input type="checkbox" value="LT_L_SPRD"></li>
+					<li><span>도로명주소건물</span> <input type="checkbox" value="LT_C_SPBD"></li>
+				</ul>
+			</li>
+			<li>행정구역도
+				<ul>
+					<li><span>광역시도</span> <input type="checkbox" value="LT_C_ADSIDO"></li>
+					<li><span>시군구</span> <input type="checkbox" value="LT_C_ADSIGG"></li>
+					<li><span>읍면동</span> <input type="checkbox" value="LT_C_ADEMD"></li>
+					<li><span>리</span> <input type="checkbox" value="LT_C_ADRI"></li>
+				</ul>
+			</li>
+		</ul>
+	</form>
+</div>
+<script type="text/javascript">
+	
+var view = new ol.View({
+	projection : 'EPSG:3857',
+	center: ol.proj.transform([128.879115,35.226713], 'EPSG:4326', 'EPSG:3857'),
+	zoom: 17,
+	minZoom : 0,
+	maxZoom : 21
+});
+
+var osm = new ol.layer.Tile({//OpenStreetMap
+	visible: true,
+	source: new ol.source.OSM({
+		attributions: [ ol.source.OSM.ATTRIBUTION ]
+	}),
+	name: "osm"
+});
+ 	
+var map = new ol.Map({
+	layers: [osm],
+	target: 'map', // The DOM element that will contains the map
+	renderer : 'canvas', // Force the renderer to be used
+	view : view,
+	controls: ol.control.defaults({
+		attributionOptions:  ({ collapsed: false }) 	    
+	})
+	
+});
+
+$(function(){
+	$(document).on('click','#wms_check_box input[type=checkbox]',function(){
+		var this_val = $(this).val();
+		var this_checked = $(this).is(":checked");
+		var this_title = $(this).prev().text();
+		var isNull = true; //널여부 체크
+		
+		map.getLayers().forEach(function(layer) {
+			if(layer.get("name")=="wms_theme_" + this_title){
+				if(this_checked){
+					layer.setVisible(true);
+				}else{
+					layer.setVisible(false);
+				}
+				isNull = false;
+			}
+		})//map.getLayers().forEach
+		if(isNull){
+			var layer_tile = new ol.layer.Tile({
+		        title: this_title,
+		        name: "wms_theme_" + this_title,
+		        extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],//
+		        maxZoom: 19,
+		        minZoom: 6,
+		        projection: "EPSG:900913",
+		        tilePixelRatio: 1,
+		        tileSize: [512, 512],
+		        source: new ol.source.TileWMS({
+		            url: "http://2d.vworld.kr:8895/2DCache/gis/map/WMS2",
+		            params: {
+		                LAYERS: this_val,
+		                STYLES: this_val,
+		                CRS: "EPSG:900913",
+		                apikey: "E4A59B05-0CF4-3654-BD0C-A169F70CCB34",
+		                title: this_title,
+		                FORMAT: "image/png"
+		            },
+		            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}) //_tilegrid 
+			        })
+			    });
+			layer_tile.setZIndex(5);
+			map.addLayer(layer_tile);
+		}//if(isNull)
+	});//'click'
+})
+
+
+</script>
+</body>
+</html>
