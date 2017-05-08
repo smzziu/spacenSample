@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="http://map.vworld.kr/js/vworldMapInit.js.do?version=2.0&apiKey=E4A59B05-0CF4-3654-BD0C-A169F70CCB34"></script>
+<meta charset="UTF-8">
+<title>api2.0 wms sample</title>
+</head>
+
+<body>
+<div id="map" style="float: left; width: 800px;"></div>
+<div style="border: 1px solid black; float: left; width: 224px; " >
+	
+	<form action="" id="wms_check_box">
+		<ul>
+			<li>산업입지도
+				<ul>
+					<li><span>단지경계</span> <input type="checkbox" value="LT_C_DAMDAN"></li>
+					<li><span>단지용도지역</span> <input type="checkbox" value="LT_C_DAMYOD"></li>
+					<li><span>단지시설용지</span> <input type="checkbox" value="LT_C_DAMYOJ"></li>
+					<li><span>단지유치업종</span> <input type="checkbox" value="LT_C_DAMYUCH"></li>
+				</ul>
+			</li>
+		</ul>
+	</form>
+</div>
+<script type="text/javascript">
+vw.ol3.MapOptions = {
+   basemapType: vw.ol3.BasemapType.GRAPHIC
+ , controlDensity: vw.ol3.DensityType.EMPTY
+ , interactionDensity: vw.ol3.DensityType.BASIC
+ , controlsAutoArrange: true
+ , homePosition: vw.ol3.CameraPosition
+ , initPosition: vw.ol3.CameraPosition
+}; 
+  
+var vmap = new vw.ol3.Map("map",  vw.ol3.MapOptions);
+$(function(){
+	
+	$(document).on('click','#wms_check_box input[type=checkbox]',function(){
+		var this_val = $(this).val();
+		var this_checked = $(this).is(":checked");
+		var this_title = $(this).prev().text();
+		var isNull = true; //널여부 체크
+		
+		vmap.getLayers().forEach(function(layer) {
+			if(layer.get("name")=="wms_theme_" + this_title){
+				if(this_checked){
+					layer.setVisible(true);
+				}else{
+					layer.setVisible(false);
+				}
+				isNull = false;
+			}
+		})//vmap.getLayers().forEach
+		if(isNull){
+			var layer_tile = new ol.layer.Tile({
+		        title: this_title,
+		        name: "wms_theme_" + this_title,
+		        extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],//
+		        maxZoom: 19,
+		        minZoom: 6,
+		        projection: "EPSG:900913",
+		        tilePixelRatio: 1,
+		        tileSize: [512, 512],
+		        source: new ol.source.TileWMS({
+		            url: "http://api.vworld.kr/req/wms?",
+		            params: {
+		                LAYERS: this_val,
+		                STYLES: this_val,
+		                CRS: "EPSG:900913",
+		                apikey: "E4A59B05-0CF4-3654-BD0C-A169F70CCB34",
+		                DOMAIN:"http://loacalhost:8080",
+		                title: this_title,
+		                FORMAT: "image/png",
+		                domain: "http://localhost",
+		                WIDTH:512,
+		                HEIGHT:512
+		            },
+		            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}) //_tilegrid 
+			    })
+		    	});
+			layer_tile.setZIndex(5);
+			vmap.addLayer(layer_tile);
+		}//if(isNull)
+	});//'click'
+})
+
+</script>
+</body>
+</html>
