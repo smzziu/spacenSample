@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Earthquake Clusters</title>
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://openlayers.org/en/v4.0.1/build/ol.js"></script>
+  </head>
+  <body>
+    <div id="map" style="width:80%;height:600px;left:0px;top:0px"></div>
+    <select onchange="updateViewProjection(this.value);">
+    	<option value="EPSG:3857">EPSG:3857</option>
+    	<option value="EPSG:4326">EPSG:4326</option>
+    </select>
+    <script>
+      
+      var raster = new ol.layer.Tile({
+			source: new ol.source.XYZ({
+				url: 'http://api.vworld.kr/req/wmts/1.0.0/E4A59B05-0CF4-3654-BD0C-A169F70CCB34/Base/{z}/{y}/{x}.png'
+			})
+      });
+      
+      var osm = new ol.layer.Tile({
+		source: new ol.source.OSM()
+		});
+      
+      newProj = ol.proj.get('EPSG:3857');
+      newProjExtent = newProj.getExtent();
+      
+      var olView = new ol.View({
+          center: ol.proj.transform([127.100616,37.402142], 'EPSG:4326', 'EPSG:3857'),
+          zoom: 10,
+   		  minZoom : 5,
+   		  maxZoom : 21,
+   		 projection: newProj,
+         extent: newProjExtent || undefined
+      })
+      
+      var map = new ol.Map({
+          layers: [osm,raster],
+          target: 'map',
+          view: olView
+      });
+        
+      
+      function updateViewProjection(viewProjSelect) {
+          var newProj = ol.proj.get(viewProjSelect);
+          var newProjExtent = newProj.getExtent();
+          olView2 = new ol.View({
+        	  center: ol.proj.transform([127.100616,37.402142], 'EPSG:4326', viewProjSelect),
+        	  //center: ol.extent.getCenter(newProjExtent || [0, 0, 0, 0]),
+        	  projection: newProj,
+              extent: newProjExtent || undefined,
+              zoom: 5,
+       		  minZoom : 5,
+       		  maxZoom : 21
+          })
+          map.setView(olView2);
+      }
+    </script>
+  </body>
+</html>
